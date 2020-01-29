@@ -66,14 +66,57 @@ const drawGrid = () => {
     ctx.stroke();
   };
 
-const renderLoop = () => {
-  universe.tick();
+let animationId = null;
 
+const renderLoop = () => {
   drawGrid();
   drawCells();
-  requestAnimationFrame(renderLoop);
+  universe.tick();
+  animationId = requestAnimationFrame(renderLoop);
 };
+
+const isPaused = () => animationId === null;
+
+const playPauseButton = document.getElementById("play-pause");
+
+const play = () => {
+  playPauseButton.textContent = "⏸";
+  renderLoop();
+};
+
+const pause = () => {
+  playPauseButton.textContent = "▶";
+  cancelAnimationFrame(animationId);
+  animationId = null;
+};
+
+playPauseButton.addEventListener("click", event => {
+  if (isPaused()) {
+    play();
+  } else {
+    pause();
+  }
+});
 
 drawGrid();
 drawCells();
-requestAnimationFrame(renderLoop);
+play();
+
+canvas.addEventListener("click", event => {
+  const boundingRect = canvas.getBoundingClientRect();
+
+  const scaleX = canvas.width / boundingRect.width;
+  const scaleY = canvas.height / boundingRect.height;
+
+  const canvasLeft = (event.clientX - boundingRect.left) * scaleX;
+  const canvasTop = (event.clientY - boundingRect.top) * scaleY;
+
+  const row = Math.min(Math.floor(canvasTop / (CELL_SIZE + 1)), height - 1);
+  const col = Math.min(Math.floor(canvasLeft / (CELL_SIZE + 1)), width - 1);
+
+  universe.toggle_cell(row, col);
+
+  drawGrid();
+  drawCells();
+});
+
